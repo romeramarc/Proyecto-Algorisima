@@ -36,12 +36,29 @@ Una transición de fase en este contexto significa que para ciertos valores de `
 
 ## Instrucciones para Compilar y Ejecutar el Código
 
-### Requisitos Previos
-- Tener un compilador de C++ instalado (como `g++`).
-- Terminal o línea de comandos.
-
 ### Compilación del Código
 Para compilar el código en la terminal, navega hasta el directorio donde se encuentra el archivo del proyecto y ejecuta el siguiente comando:
 
 ```bash
-g++ -o percolacion main.cpp
+make
+```
+### Ejecución del Código
+
+```bash
+./graph_framework
+```
+
+### Modificar parametros para personalizar las muestras
+
+Estos son los valores que encontramos en el main y se pueden modifcar manualmente.
+
+```cpp
+int numGrafoMin = 50;
+int numGrafoMax = 500;
+int stepN = 50;
+string tipoGrafo = "cuadrado";
+string tipoPercolacion = "vertices";
+```
+
+
+
