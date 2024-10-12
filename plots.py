@@ -54,8 +54,8 @@ def plot_boxplot_componentes(datos_percolados):
     plt.close()
 
 if __name__ == "__main__":
-    archivo_original = 'DATASET_TRIANGULAR_V/componentes_originales.txt'
-    archivo_percolado = 'DATASET_TRIANGULAR_V/componentes_percolados.txt'
+    archivo_original = 'DATASET_GEOMETRICO/componentes_originales.txt'
+    archivo_percolado = 'DATASET_GEOMETRICO/componentes_percolados.txt'
     
     # Leer los datos desde los archivos de salida generados por el experimento
     datos_originales, datos_percolados = leer_datos(archivo_original, archivo_percolado)

@@ -88,7 +88,7 @@ public:
             if (verticesEliminados[i]) continue;  // Ignorar nodos ya eliminados
             for (auto it = adyacencia[i].begin(); it != adyacencia[i].end();) {
                 int j = *it;
-                if (dist(gen) < p) {  // Eliminar la arista con probabilidad p
+                if (dist(gen) > p) {  // Eliminar la arista con probabilidad 1-p
                     it = adyacencia[i].erase(it);  // Eliminar arista y actualizar el iterador
                     adyacencia[j].erase(remove(adyacencia[j].begin(), adyacencia[j].end(), i), adyacencia[j].end());
                 } else {
@@ -188,11 +188,11 @@ void realizarExperimentoConArchivos(int numGrafoMin, int numGrafoMax, int stepN,
 
 int main() {
     // Parámetros del experimento
-    int numGrafoMin = 10;    // Valor mínimo de n para los grafos
-    int numGrafoMax = 100;   // Valor máximo de n para los grafos
-    int stepN = 10;          // Incremento del tamaño de n en cada iteración
+    int numGrafoMin = 100;    // Valor mínimo de n para los grafos
+    int numGrafoMax = 1000;   // Valor máximo de n para los grafos
+    int stepN = 100;          // Incremento del tamaño de n en cada iteración
     int grafosPorN = 20;      // Número de grafos a generar por cada valor de n
-    string tipoGrafo = "triangular"; // Tipo de grafo: "cuadrado", "triangular", o "geometrico"
+    string tipoGrafo = "geometrico"; // Tipo de grafo: "cuadrado", "triangular", o "geometrico"
     string tipoPercolacion = "aristas"; // Tipo de percolación: "aristas", "vertices", o "ambos"
     string archivoOriginal = "componentes_originales.txt";
     string archivoPercolado = "componentes_percolados.txt";
