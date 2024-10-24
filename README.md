@@ -60,5 +60,25 @@ string tipoGrafo = "cuadrado";
 string tipoPercolacion = "vertices";
 ```
 
+## Instrucciones para Crear los Graficos y analizar las muestras
+
+En caso de querer los plots para visualizar los datos de una muestra en particular:
+
+1. Especificamos la ruta de los archivos
+```py
+if __name__ == "__main__":
+    archivo_original = 'DATASET_GEOMETRICO/componentes_originales.txt'
+    archivo_percolado = 'DATASET_GEOMETRICO/componentes_percolados.txt'
+```
+
+2. Ejecutamos
+```bash
+python3 plot.py
+```
+En caso de querer los plots para comprar los grafos:
+
+```bash
+python3 plot_completo.py
+```
 
 
