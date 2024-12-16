@@ -1,3 +1,155 @@
+Marco Estratégico General para la Migración de Procesos SAS a Databricks
+
+1. Objetivo del Marco Estratégico
+
+El objetivo de este marco estratégico es definir los lineamientos clave que permitan la migración eficiente de los procesos SAS al entorno Databricks. Este marco se enfoca en la reutilización de componentes, la modularización de la lógica, la centralización de parámetros, la automatización de procesos y el aprovechamiento de las capacidades de Databricks para el procesamiento distribuido de grandes volúmenes de datos.
+
+Este documento se ha construido a partir del análisis de los procesos previamente estudiados y se ha diseñado para ser aplicable a otros procesos similares, asegurando una migración eficiente, escalable y fácil de mantener.
+
+2. Estructura del Marco Estratégico
+
+El marco se basa en los siguientes puntos clave:
+	•	Centralizar configuraciones y parámetros
+	•	Modularizar la lógica de negocio
+	•	Implementar uniones y combinaciones de datos estandarizadas
+	•	Automatizar la generación de períodos y fechas
+	•	Estandarizar operaciones de agregación y resumen
+	•	Almacenamiento y persistencia de datos
+
+3. Descripción y acciones clave por cada punto
+
+1. Centralizar configuraciones y parámetros
+
+Descripción:
+Los procesos SAS suelen tener configuraciones distribuidas en forma de macros (%let) o variables globales. Este enfoque puede complicar la mantenibilidad y la escalabilidad del proceso. En Databricks, se propone centralizar estas configuraciones en archivos YAML o JSON que se carguen de forma dinámica al inicio de la ejecución.
+
+Acciones recomendadas:
+	•	Crear archivos YAML o JSON con los parámetros de configuración.
+	•	Cargar y leer la configuración al inicio de la ejecución del proceso en Databricks.
+	•	Evitar la codificación de valores fijos en el código.
+
+Ejemplo de archivo de configuración YAML (config.yaml):
+
+filtros:
+  ramo: ['FC', 'FD', 'FK']
+  periodo_vto: 202410
+  max_maduracion: 3
+  num_periodos: 6
+
+Ejemplo de código en PySpark para cargar la configuración:
+
+import yaml
+
+with open("/dbfs/mnt/config/config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+filtros_ramo = config["filtros"]["ramo"]
+periodo_vto = config["filtros"]["periodo_vto"]
+max_maduracion = config["filtros"]["max_maduracion"]
+
+2. Modularizar la lógica de negocio
+
+Descripción:
+Las operaciones comunes deben encapsularse en funciones reutilizables para evitar la duplicación de lógica en el código. Esto incluye funciones de filtrado, cálculos de fechas, generación de columnas, entre otros.
+
+Acciones recomendadas:
+	•	Identificar funciones repetitivas en los procesos SAS.
+	•	Crear módulos Python con funciones reutilizables para la lógica de negocio.
+	•	Importar las funciones desde un módulo centralizado.
+
+Ejemplo de funciones reutilizables:
+
+from pyspark.sql import functions as F
+
+def filtrar_por_ramo(df, ramos):
+    """Filtra el DataFrame por la lista de ramos especificada."""
+    return df.filter(F.col("ramo").isin(ramos))
+
+def calcular_maduracion(df, anio_col, mes_col, max_maduracion):
+    """Calcula los períodos de maduración inicial y final."""
+    df = df.withColumn("aa_ini", F.when(F.col(mes_col) - 2 <= 0, F.col(anio_col) - 1).otherwise(F.col(anio_col)))
+    df = df.withColumn("mm_ini", F.when(F.col(mes_col) - 2 <= 0, 12 + F.col(mes_col) - 2).otherwise(F.col(mes_col) - 2))
+    return df
+
+3. Implementar uniones y combinaciones de datos estandarizadas
+
+Descripción:
+Los procesos SAS realizan uniones de tablas de forma frecuente. Para estandarizar esta operación, se propone utilizar una función genérica para realizar uniones con control sobre el tipo de unión y las claves de relación.
+
+Acciones recomendadas:
+	•	Crear una función para uniones genéricas.
+	•	Definir parámetros para las claves de unión y el tipo de unión.
+
+Ejemplo de función de unión:
+
+def unir_tablas(df1, df2, join_cols, join_type="left"):
+    """
+    Realiza la unión de dos DataFrames con el tipo de unión especificado.
+    """
+    return df1.join(df2, on=join_cols, how=join_type)
+
+4. Automatizar la generación de períodos y fechas
+
+Descripción:
+En SAS, los períodos se calculan mediante macros y manipulación de cadenas. En Databricks, se pueden calcular automáticamente utilizando funciones de datetime y timedelta o con las funciones nativas de PySpark.
+
+Acciones recomendadas:
+	•	Crear una función para la generación automática de períodos.
+	•	Utilizar datetime y timedelta para calcular fechas dinámicamente.
+
+Ejemplo de función de generación de períodos:
+
+from datetime import datetime, timedelta
+
+def generar_periodos(periodo_inicial, num_periodos):
+    periodos = []
+    fecha_inicial = datetime.strptime(str(periodo_inicial), "%Y%m")
+    for i in range(num_periodos):
+        periodo = (fecha_inicial - timedelta(days=30 * i)).strftime("%Y%m")
+        periodos.append(int(periodo))
+    return periodos
+
+5. Estandarizar operaciones de agregación y resumen
+
+Descripción:
+Estandarizar la lógica de los cálculos de agregación (sumas, promedios, conteos) para evitar duplicación de lógica y mantener la consistencia de los resultados.
+
+Acciones recomendadas:
+	•	Crear una función reutilizable para realizar operaciones de agregación de forma genérica.
+	•	Definir parámetros para las columnas de agrupación y los cálculos de agregación.
+
+Ejemplo de función de agregación de datos:
+
+from pyspark.sql import functions as F
+
+def agregar_datos(df, group_by_cols, agg_exprs):
+    """
+    Realiza una agregación sobre un DataFrame, agrupando por las columnas especificadas y aplicando las expresiones de agregación.
+    """
+    return df.groupBy(group_by_cols).agg(*[F.expr(expr) for expr in agg_exprs])
+
+6. Almacenamiento y persistencia de datos
+
+Descripción:
+Asegurar que la tabla final se almacene en un formato optimizado (como Parquet o Delta), permitiendo su reutilización en otros procesos.
+
+Acciones recomendadas:
+	•	Definir una ruta de almacenamiento centralizada en el Data Lake.
+	•	Usar Delta Lake para permitir actualizaciones incrementales y mejor control de la tabla final.
+
+Ejemplo de persistencia de la tabla final:
+
+output_path = "/mnt/datalake/tables/final_table"
+
+# Usar Delta para permitir actualizaciones incrementales
+df.write.format("delta").mode("overwrite").save(output_path)
+
+4. Conclusiones finales
+
+El marco estratégico descrito proporciona un enfoque integral para la migración de procesos SAS a Databricks, asegurando la modularización, la reutilización y la escalabilidad. Este enfoque permite optimizar la lógica de negocio, centralizar parámetros y facilitar la actualización de los procesos en el futuro. Además, el uso de Delta Lake garantiza la persistencia eficiente y la capacidad de realizar actualizaciones incrementales.
+
+Este marco es aplicable a procesos similares y puede evolucionar conforme se identifiquen nuevos patrones o necesidades en la migración de los procesos SAS a Databricks.
+
 # Proyecto de Algorismia: Conectividad y Percolación
 
 Este proyecto forma parte del curso de Algorismia en la **FIB-UPC** (Facultat d'Informàtica de Barcelona, Universitat Politècnica de Catalunya) durante el trimestre **Q1 2024-2025**. Su objetivo principal es realizar un estudio experimental sobre la existencia de una posible transición de fase en el número de componentes conexas de un grafo cuando se somete a un proceso de percolación.
